@@ -3,7 +3,7 @@ import numpy as np
 
 def plot_depth_vs_shadow_relationship(depth_history, shadow_area_history):
     """
-    Prove mathematical relationship: depth ∝ 1/sqrt(shadow_area)
+    depth ∝ 1/sqrt(shadow_area)
     """
     if len(depth_history) < 10:
         print("[WARN] Not enough data for analytics")
@@ -21,21 +21,17 @@ def plot_depth_vs_shadow_relationship(depth_history, shadow_area_history):
     # Plot 2: Depth vs Shadow Area (scatter + trend)
     axes[1].scatter(shadow_area_history, depth_history, alpha=0.5, s=10)
     
-    # Fit inverse sqrt relationship
     shadow_arr = np.array(shadow_area_history)
     depth_arr = np.array(depth_history)
     
-    # Filter outliers
     valid = (depth_arr < 50) & (shadow_arr > 0)
     shadow_clean = shadow_arr[valid]
     depth_clean = depth_arr[valid]
     
     if len(shadow_clean) > 10:
-        # Fit d = k / sqrt(A)
         sqrt_shadow = np.sqrt(shadow_clean)
         k_fit = np.mean(depth_clean * sqrt_shadow)
         
-        # Plot fitted curve
         shadow_range = np.linspace(shadow_clean.min(), shadow_clean.max(), 100)
         depth_fit = k_fit / np.sqrt(shadow_range)
         axes[1].plot(shadow_range, depth_fit, 'r--', linewidth=2, 

@@ -39,11 +39,9 @@ def detect_face_hand(frame):
     if hand_results.multi_hand_landmarks:
         hand_landmarks = hand_results.multi_hand_landmarks[0]
         
-        # Get hand center (wrist landmark)
         wrist = hand_landmarks.landmark[0]
         hand_x, hand_y = int(wrist.x * w), int(wrist.y * h)
         
-        # Convert to face ROI coordinates if hand is near face
         if face_box:
             fx, fy, fw, fh = face_box
             if fx <= hand_x <= fx + fw and fy <= hand_y <= fy + fh:

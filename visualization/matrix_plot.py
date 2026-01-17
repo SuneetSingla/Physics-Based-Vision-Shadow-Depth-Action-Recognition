@@ -9,17 +9,14 @@ def create_shadow_intensity_matrix(face_roi, shadow_mask, depth=None):
     """
     Create 2D heatmap showing light intensity loss due to shadow
     """
-    gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY) 
     
-    # Create figure
     fig, axes = plt.subplots(1, 2, figsize=(8, 4))
     
-    # Original face
     axes[0].imshow(cv2.cvtColor(face_roi, cv2.COLOR_BGR2RGB))
     axes[0].set_title('Face Region')
     axes[0].axis('off')
     
-    # Shadow intensity matrix
     intensity_loss = gray.copy().astype(float)
     intensity_loss[shadow_mask > 0] = intensity_loss[shadow_mask > 0] * 0.3
     
@@ -28,7 +25,6 @@ def create_shadow_intensity_matrix(face_roi, shadow_mask, depth=None):
     axes[1].axis('off')
     plt.colorbar(im, ax=axes[1], fraction=0.046)
     
-    # Convert matplotlib figure to OpenCV image
     canvas = FigureCanvasAgg(fig)
     canvas.draw()
     buf = np.frombuffer(canvas.buffer_rgba(), dtype=np.uint8)

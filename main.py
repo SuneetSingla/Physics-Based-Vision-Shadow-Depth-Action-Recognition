@@ -15,25 +15,20 @@ from visualization.matrix_plot import (
 )
 from physics.depth_estimation import estimate_depth_geometric
 
-# ---------------- VIDEO SETUP ---------------- #
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('demo_output.avi', fourcc, 20.0, (640, 480))
 cap = cv2.VideoCapture(0)
 
-# ---------------- ANALYTICS ---------------- #
 depth_history = []
 shadow_area_history = []
 
-# ---------------- PHYSICS CALIBRATION ---------------- #
 CALIBRATION_DEPTH_CM = 2.0   # touching face
 calibrated_k = None
 
-# ---------------- SHADOW PHYSICS TUNING ---------------- #
-MIN_SHADOW_AREA = 400        # below this → unreliable shadow
-GAMMA = 1.7                  # response expansion
-ALPHA = 1.2                  # scale factor
+MIN_SHADOW_AREA = 400       
+GAMMA = 1.7                 
+ALPHA = 1.2              
 
-# ---------------- LIGHT STABILIZATION ---------------- #
 light_dir_buffer = []
 LOCK_FRAMES = 40
 
@@ -57,14 +52,12 @@ while True:
         x, y, w, h = face_box
         face_roi = frame[y:y+h, x:x+w]
 
-        # -------- SHADOW SEGMENTATION -------- #
         shadow_mask, avg_intensity = segment_shadow_with_hand(
             face_roi, hand_in_face
         )
 
         shadow_area = np.sum(shadow_mask > 0)
 
-        # -------- LIGHT DIRECTION (STABILIZED) -------- #
         raw_light_dir = estimate_light_direction(face_roi)
         if raw_light_dir is not None:
             light_dir_buffer.append(raw_light_dir)
@@ -77,7 +70,6 @@ while True:
             light_dir = np.mean(light_dir_buffer, axis=0)
             light_dir = light_dir / (np.linalg.norm(light_dir) + 1e-6)
 
-        # -------- SHADOW-CENTROID LIGHT CORRECTION -------- #
         ys, xs = np.where(shadow_mask > 0)
         if len(xs) > 50:
             shadow_cx = np.mean(xs)
@@ -91,26 +83,21 @@ while True:
                 display_frame, face_box, light_dir
             )
 
-        # -------- GEOMETRIC DEPTH -------- #
         depth_geom = estimate_depth_geometric(
             hand_landmarks, face_box, frame.shape
         )
 
-        # -------- PHYSICS CALIBRATION (TOUCH ONLY) -------- #
         if calibrated_k is None and shadow_area > 800:
             calibrated_k = CALIBRATION_DEPTH_CM * np.sqrt(shadow_area)
             print(f"[CALIBRATED] k = {calibrated_k:.2f}")
 
-        # -------- SHADOW PHYSICS DEPTH -------- #
         depth_shadow = None
         if calibrated_k is not None and shadow_area > MIN_SHADOW_AREA:
             raw_depth = calibrated_k / (np.sqrt(shadow_area) + 1e-6)
 
-            # Non-linear expansion (KEY FIX)
             depth_shadow = ALPHA * (raw_depth ** GAMMA)
             depth_shadow = np.clip(depth_shadow, 1.5, 40.0)
 
-        # -------- HYBRID DEPTH DECISION -------- #
         if depth_shadow is not None:
             depth = depth_shadow
             depth_source = "Physics (Expanded Shadow)"
@@ -118,7 +105,6 @@ while True:
             depth = depth_geom
             depth_source = "Geometry"
 
-        # -------- ACTION CLASSIFICATION -------- #
         if depth:
             depth_history.append(depth)
             shadow_area_history.append(shadow_area)
@@ -170,7 +156,6 @@ cv2.destroyAllWindows()
 print("[INFO] Video saved as demo_output.avi")
 print(f"[INFO] Frames with depth data: {len(depth_history)}")
 
-# -------- ANALYTICS -------- #
 if len(depth_history) > 10:
     from visualization.analytics import plot_depth_vs_shadow_relationship
     plot_depth_vs_shadow_relationship(depth_history, shadow_area_history)
