@@ -1,0 +1,5 @@
+opencv-python
+python
+mediapipe==0.10.9
+numpy
+matplotlib
